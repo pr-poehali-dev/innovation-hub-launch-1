@@ -1,12 +1,15 @@
 """
-Регистрация нового пользователя TalkWave по номеру телефона.
+Регистрация нового пользователя TalkWave по номеру телефона с отправкой SMS.
 """
 import json
 import os
 import random
 import string
 import hashlib
+import urllib.request
+import urllib.parse
 import psycopg2
+from datetime import datetime, timedelta
 
 SCHEMA = os.environ.get("MAIN_DB_SCHEMA", "t_p99873448_innovation_hub_launc")
 CORS = {
@@ -26,6 +29,27 @@ def hash_password(password: str) -> str:
 
 def generate_sms_code() -> str:
     return "".join(random.choices(string.digits, k=6))
+
+
+def send_sms(phone: str, code: str) -> bool:
+    api_key = os.environ.get("SMSRU_API_KEY", "")
+    # Нормализуем номер: оставляем только цифры, добавляем 7 если надо
+    digits = "".join(c for c in phone if c.isdigit())
+    if digits.startswith("8") and len(digits) == 11:
+        digits = "7" + digits[1:]
+    elif len(digits) == 10:
+        digits = "7" + digits
+
+    params = urllib.parse.urlencode({
+        "api_id": api_key,
+        "to": digits,
+        "msg": f"TalkWave: ваш код подтверждения {code}. Никому не сообщайте.",
+        "json": 1,
+    })
+    url = f"https://sms.ru/sms/send?{params}"
+    req = urllib.request.urlopen(url, timeout=10)
+    resp = json.loads(req.read().decode())
+    return resp.get("status") == "OK"
 
 
 def handler(event: dict, context) -> dict:
@@ -57,7 +81,6 @@ def handler(event: dict, context) -> dict:
     )
     user_id = cur.fetchone()[0]
 
-    from datetime import datetime, timedelta
     code = generate_sms_code()
     expires = datetime.now() + timedelta(minutes=10)
     cur.execute(
@@ -67,8 +90,12 @@ def handler(event: dict, context) -> dict:
     conn.commit()
     conn.close()
 
+    sms_sent = send_sms(phone, code)
+    if not sms_sent:
+        return {"statusCode": 500, "headers": headers, "body": json.dumps({"error": "Не удалось отправить SMS. Проверьте номер телефона."})}
+
     return {
         "statusCode": 200,
         "headers": headers,
-        "body": json.dumps({"success": True, "user_id": user_id, "debug_code": code}),
+        "body": json.dumps({"success": True, "user_id": user_id}),
     }

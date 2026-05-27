@@ -20,7 +20,6 @@ export default function Auth() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [debugCode, setDebugCode] = useState("");
 
   function saveSession(token: string, nick: string) {
     localStorage.setItem("tw_token", token);
@@ -33,7 +32,6 @@ export default function Auth() {
     const res = await apiRegister(phone, nickname, password);
     setLoading(false);
     if (res.error) return setError(res.error);
-    if (res.debug_code) setDebugCode(res.debug_code);
     setStep("verify");
   }
 
@@ -202,12 +200,6 @@ export default function Auth() {
                   Введите 6-значный код, отправленный на <span className="text-white">{phone}</span>
                 </p>
               </div>
-              {debugCode && (
-                <div className="bg-[#20c997]/10 border border-[#20c997]/30 rounded-xl p-3 text-center">
-                  <p className="text-[#6b6f85] text-xs mb-1">Тестовый код (уберём в продакшене):</p>
-                  <p className="text-[#20c997] font-bold text-2xl tracking-widest">{debugCode}</p>
-                </div>
-              )}
               <div>
                 <Label className="text-[#8b8fa8] text-sm mb-1.5 block">Код из SMS</Label>
                 <Input
