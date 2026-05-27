@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Shield,
-  Zap,
   ArrowRight,
   Users,
   Mic,
@@ -15,11 +15,12 @@ import {
   Phone,
   MessageCircle,
   UserPlus,
-  Star,
   CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Icon from "@/components/ui/icon";
+import { apiWaitlist } from "@/lib/api";
 
 const LOGO_URL =
   "https://cdn.poehali.dev/projects/891548a8-eed9-4caa-9d36-eef8d7a9fb58/files/378b058f-cdc3-44fe-9124-064116bda400.jpg";
@@ -28,8 +29,25 @@ const APP_NAME = "TalkWave";
 const APP_TAGLINE = "Безопасные звонки и сообщения";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [waitlistPhone, setWaitlistPhone] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [waitlistMsg, setWaitlistMsg] = useState("");
+
+  async function handleWaitlist() {
+    if (!waitlistPhone.trim()) return;
+    setWaitlistStatus("loading");
+    const res = await apiWaitlist(waitlistPhone.trim());
+    if (res.success) {
+      setWaitlistStatus("success");
+      setWaitlistMsg(res.message || "Вы в списке!");
+    } else {
+      setWaitlistStatus("error");
+      setWaitlistMsg(res.error || "Ошибка, попробуйте ещё раз");
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1c2e] text-white overflow-x-hidden">
@@ -52,8 +70,11 @@ const Index = () => {
             <Button variant="ghost" className="text-[#8b8fa8] hover:text-white hover:bg-[#2a2d3e]">
               Безопасность
             </Button>
-            <Button className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-6 py-2 rounded-lg text-sm font-medium">
-              Скачать бесплатно
+            <Button
+              className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-6 py-2 rounded-lg text-sm font-medium"
+              onClick={() => navigate("/auth")}
+            >
+              Войти / Регистрация
             </Button>
           </div>
           <Button
@@ -223,11 +244,20 @@ const Index = () => {
                 {APP_NAME} — приложение для защищённых видео и аудиозвонков. Регистрация по номеру телефона, звонки только друзьям, все сообщения зашифрованы.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-8 py-3 rounded-xl text-base font-semibold">
-                  Скачать бесплатно
+                <Button
+                  className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-8 py-3 rounded-xl text-base font-semibold"
+                  onClick={() => navigate("/auth")}
+                >
+                  <Icon name="UserPlus" size={18} className="mr-2" />
+                  Зарегистрироваться
                 </Button>
-                <Button variant="ghost" className="text-[#8b8fa8] hover:text-white hover:bg-[#2a2d3e] px-8 py-3 rounded-xl text-base border border-[#2a2d3e]">
-                  Как это работает?
+                <Button
+                  variant="ghost"
+                  className="text-[#8b8fa8] hover:text-white hover:bg-[#2a2d3e] px-8 py-3 rounded-xl text-base border border-[#2a2d3e]"
+                  onClick={() => navigate("/auth")}
+                >
+                  <Icon name="LogIn" size={18} className="mr-2" />
+                  Войти
                 </Button>
               </div>
             </div>
@@ -400,16 +430,43 @@ const Index = () => {
                   <img src={LOGO_URL} alt={APP_NAME} className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-white font-bold text-xl sm:text-2xl mb-2">{APP_NAME} — общайся свободно</h3>
-                <p className="text-[#8b8fa8] mb-6 text-sm sm:text-base">Бесплатно. Без рекламы. Только вы и ваши близкие.</p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-8 py-3 rounded-xl text-base font-semibold">
-                    Скачать для Android
-                  </Button>
-                  <Button className="bg-[#1a1c2e] hover:bg-[#2a2d3e] text-white px-8 py-3 rounded-xl text-base font-semibold border border-[#2a2d3e]">
-                    Скачать для iOS
+                <p className="text-[#8b8fa8] mb-6 text-sm sm:text-base">Оставьте номер — пришлём уведомление когда выйдет мобильное приложение.</p>
+
+                {waitlistStatus === "success" ? (
+                  <div className="flex items-center justify-center gap-2 bg-[#20c997]/10 border border-[#20c997]/30 rounded-xl px-4 py-3 mb-4">
+                    <CheckCircle className="w-5 h-5 text-[#20c997]" />
+                    <span className="text-[#20c997] font-medium">{waitlistMsg}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-4">
+                    <Input
+                      value={waitlistPhone}
+                      onChange={(e) => setWaitlistPhone(e.target.value)}
+                      placeholder="+7 900 000 00 00"
+                      className="bg-[#1a1c2e] border-[#2a2d3e] text-white placeholder:text-[#4a4e6b] focus:border-[#6c63ff] rounded-xl flex-1"
+                    />
+                    <Button
+                      className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-6 py-2 rounded-xl font-semibold whitespace-nowrap"
+                      onClick={handleWaitlist}
+                      disabled={waitlistStatus === "loading"}
+                    >
+                      {waitlistStatus === "loading" ? "Отправляем..." : "Уведомить меня"}
+                    </Button>
+                  </div>
+                )}
+                {waitlistStatus === "error" && (
+                  <p className="text-red-400 text-sm mb-3">{waitlistMsg}</p>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
+                  <Button
+                    className="bg-[#6c63ff] hover:bg-[#574fd6] text-white px-8 py-3 rounded-xl text-base font-semibold"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Зарегистрироваться сейчас
                   </Button>
                 </div>
-                <div className="flex items-center justify-center gap-4 mt-4">
+                <div className="flex items-center justify-center gap-4">
                   {["Бесплатно", "Без рекламы", "Шифрование E2E"].map((tag) => (
                     <div key={tag} className="flex items-center gap-1 text-[#6b6f85] text-xs">
                       <CheckCircle className="w-3 h-3 text-[#20c997]" />

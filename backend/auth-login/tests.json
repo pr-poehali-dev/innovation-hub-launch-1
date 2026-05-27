@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Login wrong password",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79991110001", "password": "wrongpass"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Неверный номер или пароль"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login missing fields",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": ""},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

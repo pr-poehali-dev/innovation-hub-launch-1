@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Wrong code",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79991110001", "code": "000000"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "Неверный или истёкший код"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

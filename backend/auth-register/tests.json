@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Register new user",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79991110001", "nickname": "testwave1", "password": "pass123"},
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing fields",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": ""},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

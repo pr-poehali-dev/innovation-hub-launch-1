@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Add to waitlist",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79990000001"},
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get waitlist count",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"count": 0},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
